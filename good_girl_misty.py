@@ -4,7 +4,7 @@ from mistyPy.EventFilters import EventFilters
 import speech_recognition as sr
 import time
 
-ip_address = "10.245.145.216"
+ip_address = "10.245.146.204"
 misty = Robot(ip_address)
 
 
@@ -44,14 +44,14 @@ def misty_listens():
         if not text["success"]:
             print("ERROR: {}".format(text["error"]))
             misty.Speak("Sorry, please say that again.")
-            continue
+            return ""
 
         try:
             you_said = text["transcription"].lower()
         except AttributeError:
             print("Try Again")
-            misty.Speak("Sorry, please say that again.")
-            continue
+            misty.Speak("Sorry, I could not hear you.")
+            return ""
 
         print("You said: {}".format(you_said))
 
@@ -62,42 +62,44 @@ def misty_listens():
 def misty_moves_towards(command_name):
     misty.ChangeLED(0, 255, 0)
     misty.Speak("Okay.")
-    misty.Drive(3.0, 0.0)
+    misty.Drive(10.0, 0.0)
     misty.RegisterEvent(command_name, Events.TimeOfFlight,
                         condition=[EventFilters.TimeOfFlightPosition.FrontCenter,
-                                   EventFilters.TimeOfFlightDistance.MaxDistance(0.10)],
+                                   EventFilters.TimeOfFlightDistance.MaxDistance(0.15)],
                         keep_alive=False, callback_function=misty_stops, debounce=1)
 
 
 # Turn Misty left or right
-def misty_turns(direction):
+def misty_turns():
     misty.ChangeLED(0, 255, 0)
     misty.Speak("Okay.")
-    if direction == "left":
-        misty.DriveArc(90.0, 0.0, 2000.0, False)
-    elif direction == "right":
-        misty.DriveArc(270.0, 0.0, 2000.0, False)
+    global state
+    if state == 1 or state == 7:
+        misty.DriveArc(270.0, 0.0, 1000.0, False)
+    elif state == 5:
+        misty.DriveArc(180.0, 0.0, 1000.0, False)
     misty.ChangeLED(0, 0, 0)
-    misty.StartKeyPhraseRecognition()
 
 
 # Move Misty around an object
 def misty_goes_around():
     misty.ChangeLED(0, 255, 0)
     misty.Speak("Okay.")
-    misty.DriveArc(90.0, 0.0, 2000.0, False)
-    misty.DriveTime(3.0, 0.0, 1000)
+    misty.DriveArc(0.0, 0.0, 2000.0, False)
+    time.sleep(5)
+    misty.DriveTime(5.0, 0.0, 3000)
+    time.sleep(5)
     misty.DriveArc(270.0, 0.0, 2000.0, False)
-    misty.DriveTime(3.0, 0.0, 1000)
+    time.sleep(5)
+    misty.DriveTime(5.0, 0.0, 3000)
+    time.sleep(5)
     misty.ChangeLED(0, 0, 0)
-    misty.StartKeyPhraseRecognition()
 
 
 # Stop Misty
 def misty_stops(event):
     misty.Stop()
     misty.ChangeLED(0, 0, 0)
-    misty.StartKeyPhraseRecognition()
 
 
 # Function to control Misty when she hears the key phrase
@@ -105,60 +107,63 @@ def misty_follows_command(event):
     misty.StopKeyPhraseRecognition()
     misty.ChangeLED(255, 255, 0)
     misty.Speak("Yes?")
-    time.sleep(0.5)
+    time.sleep(0.2)
 
     what_she_heard = misty_listens()
+    if what_she_heard == "":
+        misty.StartKeyPhraseRecognition()
+        return
     sentence = what_she_heard.split()
     key_word = sentence[-1]
 
     global state
-    # errors
-    if (state == 0) and (key_word in ["wolf, sloth, squirrel, end"]):
+    # incorrect commands
+    if (state == 0) and (key_word in ["wolf", "sloth", "squirrel", "end"]):
         misty.ChangeLED(0, 0, 0)
         misty.Speak("Sorry. I cannot see the {}.".format(key_word))
-    elif (state == 1) and (key_word in ["wolf, sloth, squirrel, end"]):
+    elif (state == 1) and (key_word in ["wolf", "sloth", "squirrel", "end"]):
         misty.ChangeLED(0, 0, 0)
         misty.Speak("Sorry. I cannot see the {}.".format(key_word))
     elif (state == 1) and (key_word == "lion"):
         misty.ChangeLED(0, 0, 0)
         misty.Speak("I am already at the {}.".format(key_word))
-    elif (state == 2) and (key_word in ["lion, sloth, squirrel, end"]):
+    elif (state == 2) and (key_word in ["lion", "sloth", "squirrel", "end"]):
         misty.ChangeLED(0, 0, 0)
         misty.Speak("Sorry. I cannot see the {}.".format(key_word))
-    elif (state == 3) and (key_word in ["lion, sloth, squirrel, end"]):
+    elif (state == 3) and (key_word in ["lion", "sloth", "squirrel", "end"]):
         misty.ChangeLED(0, 0, 0)
         misty.Speak("Sorry. I cannot see the {}.".format(key_word))
-    elif (state == 3) and (key_word == "wolf"):
+    elif (state == 3) and (key_word == "wolf") and ("towards" in sentence):
         misty.ChangeLED(0, 0, 0)
         misty.Speak("I am already at the {}.".format(key_word))
-    elif (state == 4) and (key_word in ["lion, wolf, squirrel, end"]):
+    elif (state == 4) and (key_word in ["lion", "wolf", "squirrel", "end"]):
         misty.ChangeLED(0, 0, 0)
         misty.Speak("Sorry. I cannot see the {}.".format(key_word))
-    elif (state == 5) and (key_word in ["lion, wolf, squirrel, end"]):
+    elif (state == 5) and (key_word in ["lion", "wolf", "squirrel", "end"]):
         misty.ChangeLED(0, 0, 0)
         misty.Speak("Sorry. I cannot see the {}.".format(key_word))
     elif (state == 5) and (key_word == "sloth"):
         misty.ChangeLED(0, 0, 0)
         misty.Speak("I am already at the {}.".format(key_word))
-    elif (state == 6) and (key_word in ["lion, wolf, sloth, end"]):
+    elif (state == 6) and (key_word in ["lion", "wolf", "sloth", "end"]):
         misty.ChangeLED(0, 0, 0)
         misty.Speak("Sorry. I cannot see the {}.".format(key_word))
-    elif (state == 7) and (key_word in ["lion, wolf, sloth, end"]):
+    elif (state == 7) and (key_word in ["lion", "wolf", "sloth", "end"]):
         misty.ChangeLED(0, 0, 0)
         misty.Speak("Sorry. I cannot see the {}.".format(key_word))
     elif (state == 7) and (key_word == "squirrel"):
         misty.ChangeLED(0, 0, 0)
         misty.Speak("I am already at the {}.".format(key_word))
-    elif (state == 8) and (key_word in ["lion, wolf, sloth, squirrel"]):
+    elif (state == 8) and (key_word in ["lion", "wolf", "sloth", "squirrel"]):
         misty.ChangeLED(0, 0, 0)
         misty.Speak("Sorry. I cannot see the {}.".format(key_word))
 
-    # movements
+    # correct commands
     elif (state == 0) and ("towards" in sentence) and (key_word == "lion"):
         misty_moves_towards("lion")
         state = 1
     elif (state == 1) and ("turn" in sentence) and (key_word == "right"):
-        misty_turns("right")
+        misty_turns()
         state = 2
     elif (state == 2) and ("towards" in sentence) and (key_word == "wolf"):
         misty_moves_towards("wolf")
@@ -170,13 +175,13 @@ def misty_follows_command(event):
         misty_moves_towards("sloth")
         state = 5
     elif (state == 5) and ("turn" in sentence) and (key_word == "right"):
-        misty_turns("right")
+        misty_turns()
         state = 6
     elif (state == 6) and ("towards" in sentence) and (key_word == "squirrel"):
         misty_moves_towards("squirrel")
         state = 7
     elif (state == 7) and ("turn" in sentence) and (key_word == "left"):
-        misty_turns("left")
+        misty_turns()
         state = 8
     elif (state == 8) and (key_word == "end"):
         misty_moves_towards("end")
@@ -184,7 +189,8 @@ def misty_follows_command(event):
         state = 9
     else:
         misty.ChangeLED(0, 0, 0)
-        misty.Speak("Sorry. I couldn't understand.")
+        misty.Speak("Sorry. I could not understand.")
+    misty.StartKeyPhraseRecognition()
 
 
 if __name__ == "__main__":

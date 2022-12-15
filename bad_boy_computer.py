@@ -118,7 +118,7 @@ class TestYourEnglish(NaturalLanguage):
         self.page_num += 1
         pages = [self.main_cv, self.sub_cv1, self.sub_cv2, self.sub_cv3, self.last_cv]
         images = [self.misty, self.lion, self.wolf, self.last]
-        attempts = 5
+        attempts = 10
 
         pages[self.page_num - 1].destroy()
         pages[self.page_num].pack(fill=BOTH, expand=YES)
@@ -138,7 +138,7 @@ class TestYourEnglish(NaturalLanguage):
                 justify=CENTER, anchor=CENTER)
             attempts_text = pages[self.page_num].create_text(
                 round(self.H * 0.015), round(pages[self.page_num].winfo_height() - self.H * 0.015),
-                text=str(attempts), fill="black", font="Helvetica 20 bold", justify=CENTER, anchor=SW)
+                text="Attempts: " + str(attempts), fill="black", font="Helvetica 20 bold", justify=CENTER, anchor=SW)
             self.root.update()
             pages[self.page_num].update()
             time.sleep(2)
@@ -195,14 +195,14 @@ class TestYourEnglish(NaturalLanguage):
                 print("Wrong. You said: {}".format(you_said))
                 attempts -= 1
                 if attempts == 0:
-                    pages[self.page_num].itemconfig(attempts_text, text=str(attempts))
+                    pages[self.page_num].itemconfig(attempts_text, text="Attempts: " + str(attempts))
                     pages[self.page_num].update()
                     self.nlu.tts("you have exceeded the maximum attempts")
                     self.nlu.tts("please move on to the next question")
                     return
                 else:
                     pages[self.page_num].itemconfig(on_off_text, text="OFF", fill="black")
-                    pages[self.page_num].itemconfig(attempts_text, text=str(attempts))
+                    pages[self.page_num].itemconfig(attempts_text, text="Attempts: " + str(attempts))
                     pages[self.page_num].update()
                     self.nlu.tts("please try again")
 
